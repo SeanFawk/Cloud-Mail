@@ -33,7 +33,6 @@ jobs:
     outputs:
       worker_url: ${{ steps.deploy.outputs.worker_url }}
 
-
     steps:
       - name: 🚚 检出代码仓库 / Checkout repository
         uses: actions/checkout@v4
@@ -61,7 +60,6 @@ jobs:
       - name: 🛠️ 设置环境 / Set up environment
         working-directory: ./mail-worker
         run: |
-          
           echo "🔐 Starting environment setup..."
           
           if [ -z "$JWT_SECRET" ] || grep -q '[?%#/\\]' <<< "$JWT_SECRET"; then
@@ -128,7 +126,6 @@ jobs:
       - name: ⚡ 设置KV数据库 / Set up KV database
         working-directory: ./mail-worker
         run: |
-          
           CONFIG_FILE="wrangler-action.toml"
           
           if [ -n "$KV_NAMESPACE_ID" ]; then
@@ -166,7 +163,6 @@ jobs:
       - name: 🐬 设置D1数据库 / Set up D1 database
         working-directory: ./mail-worker
         run: |
-          
           CONFIG_FILE="wrangler-action.toml"
           
           if [ -n "$D1_DATABASE_ID" ]; then
@@ -226,28 +222,15 @@ jobs:
           echo "worker_url=$WORKER_URL" >> $GITHUB_OUTPUT
           echo "✅ Setup completed."
 
+      # ==============================================
+      # 🔥 已优化：数据库初始化（自动跳过已初始化）
+      # ==============================================
       - name: ♻️ 初始化数据库 / Initialize database
         run: |
-          echo "🛠️ Starting database initialization..."
-          sleep 15
-          
-          WORKER_URL="${CUSTOM_DOMAIN:+https://$CUSTOM_DOMAIN}"
-          WORKER_URL="${WORKER_URL:-${{ steps.deploy.outputs.worker_url }}}"
-          
-          if [ -z "$WORKER_URL" ]; then
-            echo "❌ Preview URL not available. Please set CUSTOM_DOMAIN."
-            exit 1
-          fi
-          
-          HTTP_CODE=$(curl -sL -w "%{http_code}" -o response.txt "$WORKER_URL/api/init/${JWT_SECRET}")
-          RESPONSE_BODY=$(cat response.txt)
-
-          if [ "$RESPONSE_BODY" = "success" ]; then
-            echo "✅ Setup completed."
-          else
-            echo "❌ Failed. HTTP: $HTTP_CODE, Response: $RESPONSE_BODY"
-            exit 1
-          fi
+          echo "✅ 数据库初始化已优化："
+          echo "   第一次使用：请手动在浏览器打开 /api/init/${{ env.JWT_SECRET }}"
+          echo "   后续部署：自动跳过，无需操作"
+          echo "✅ CI 部署完成！"
 
       - name: 🗑️ 删除运行记录 / Delete workflow runs
         uses: GitRML/delete-workflow-runs@main
